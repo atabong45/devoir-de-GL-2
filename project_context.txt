@@ -1,0 +1,744 @@
+Project Context From: /home/atabong/Documents/projet/GL/TP1
+Generated On: dim. 09 nov. 2025 10:33:13 CET
+===============================================
+Ignored Directory Patterns: .* node_modules vendor build dist target __pycache__ .next cache target venv storage
+Ignored File Patterns: *.log *.jar *.pdf *.png *.jpg *.class *.sqlite *.csv project_context.txt package-lock.json yarn.lock composer.lock *.ico pnpm-lock.yaml
+===============================================
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 1/CompositeIterator.java
+
+import java.util.Iterator;
+import java.util.Stack;
+
+// Le CompositeIterator : gère le parcours de l'arbre Composite
+public class CompositeIterator implements Iterator<MenuComponent> {
+    
+    private Stack<Iterator<MenuComponent>> stack = new Stack<>();
+
+    public CompositeIterator(Iterator<MenuComponent> iterator) {
+        // Au début, on empile l'itérateur de l'élément racine (AllMenus)
+        stack.push(iterator);
+    }
+
+    @Override
+    public boolean hasNext() {
+        // Tant que la pile n'est pas vide
+        if (stack.empty()) {
+            return false;
+        }
+        
+        // Regarder l'itérateur courant au sommet de la pile
+        Iterator<MenuComponent> iterator = stack.peek();
+        
+        // Si l'itérateur courant n'a plus d'éléments, on le dépile et on réessaye
+        if (!iterator.hasNext()) {
+            stack.pop();
+            return hasNext(); // Appel récursif pour vérifier le prochain itérateur dans la pile
+        } else {
+            return true; // L'itérateur courant a un élément suivant
+        }
+    }
+
+    @Override
+    public MenuComponent next() {
+        if (!hasNext()) {
+            throw new java.util.NoSuchElementException();
+        }
+        
+        // Récupère l'élément suivant de l'itérateur courant
+        Iterator<MenuComponent> iterator = stack.peek();
+        MenuComponent component = iterator.next();
+
+        // Si l'élément suivant est un Composite (un Menu), on empile son itérateur.
+        // C'est ce qui gère le parcours en profondeur.
+        if (component instanceof Menu) {
+            stack.push(component.createIterator());
+        }
+        
+        // Retourne l'élément Leaf ou Composite trouvé
+        return component;
+    }
+
+    // On n'implémente pas remove() pour ce cas
+    @Override
+    public void remove() {
+        throw new UnsupportedOperationException();
+    }
+}
+// END OF FILE: EXO 1/CompositeIterator.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 1/main.java
+
+public class Main {
+    public static void main(String[] args) {
+        // --- 1. CRÉATION DES FEUILLES (MenuItems) ---
+
+        MenuItem pancakeBreakfast = new MenuItem(
+            "Petit-déjeuner Pancake",
+            "Pancakes avec œufs brouillés et toast",
+            false,
+            2.99
+        );
+
+        MenuItem waffle = new MenuItem(
+            "Gaufres régulières",
+            "Nos gaufres avec vos baies préférées",
+            true,
+            3.59
+        );
+
+        MenuItem veggieBurger = new MenuItem(
+            "Burger Végétarien",
+            "Burger végétarien sur un pain de blé entier",
+            true,
+            3.99
+        );
+        
+        MenuItem soupOfTheDay = new MenuItem(
+            "Soupe du Jour",
+            "Une soupe du jour, servie avec un accompagnement de salade",
+            true,
+            1.59
+        );
+
+        MenuItem pie = new MenuItem("Tarte aux pommes", "Tarte aux pommes avec glace", false, 1.50);
+        MenuItem fruitSalad = new MenuItem("Salade de fruits", "Salade de fruits frais de saison", true, 2.50);
+        
+        // --- 2. CRÉATION DES COMPOSITES (Menus) ---
+        
+        Menu pancakeHouseMenu = new Menu("Menu Pancake House", "Petits-déjeuners");
+        Menu dinerMenu = new Menu("Menu du Diner", "Déjeuner et Diner");
+        Menu cafeMenu = new Menu("Menu du Café", "Diners");
+        Menu dessertMenu = new Menu("Menu Desserts", "Desserts succulents"); // Sous-menu
+
+        // --- 3. CRÉATION DE L'ARBRE (Composite) ---
+        
+        Menu allMenus = new Menu("MENU GÉNÉRAL", "Tous les menus combinés");
+        allMenus.add(pancakeHouseMenu);
+        allMenus.add(dinerMenu);
+        allMenus.add(cafeMenu);
+
+        // Ajout des éléments du Pancake House
+        pancakeHouseMenu.add(pancakeBreakfast);
+        pancakeHouseMenu.add(waffle);
+
+        // Ajout des éléments du Diner (et d'un sous-menu)
+        dinerMenu.add(veggieBurger);
+        dinerMenu.add(soupOfTheDay);
+        dinerMenu.add(dessertMenu); // Ajout d'un Composite (récursivité)
+        
+        // Ajout des éléments du Dessert
+        dessertMenu.add(pie);
+        dessertMenu.add(fruitSalad);
+        
+        // --- 4. EXÉCUTION (Client) ---
+        
+        Waitress waitress = new Waitress(allMenus);
+        
+        System.out.println("=========================================");
+        System.out.println("OPÉRATION 1 : IMPRESSION COMPLÈTE DU MENU");
+        System.out.println("=========================================");
+        waitress.printMenu();
+        
+        System.out.println("============================================");
+        System.out.println("OPÉRATION 2 : RECHERCHE VÉGÉTARIENNE (EXERCICE)");
+        System.out.println("============================================");
+        waitress.printVegetarianMenu();
+
+        System.out.println("============================================");
+        System.out.println("OPÉRATION 3 : Impression d'un sous-menu spécifique (Composite)");
+        System.out.println("============================================");
+        waitress.printSpecificComponent(dinerMenu);
+
+        System.out.println("============================================");
+        System.out.println("OPÉRATION 4 : Prix total d'un sous-menu spécifique (Composite)");
+        System.out.println("============================================");
+        waitress.printSpecificComponentPrice(dessertMenu);
+
+        System.out.println("============================================");
+        System.out.println("OPÉRATION 5 : Prix d'un élément de menu en particulier (Leaf)");
+        System.out.println("============================================");
+        waitress.printSpecificComponentPrice(pancakeBreakfast);
+    }
+}// END OF FILE: EXO 1/main.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 1/MenuComponent.java
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+// La superclasse abstraite qui définit le contrat commun (Component)
+public abstract class MenuComponent {
+
+    // --- Méthodes de Gestion de Composants (Les Composites les surchargent) ---
+
+    // Ajoute un composant à la collection. Par défaut, lève une exception (car les Feuilles ne supportent pas l'ajout).
+    public void add(MenuComponent menuComponent) {
+        throw new UnsupportedOperationException();
+    }
+
+    // Supprime un composant de la collection. Par défaut, lève une exception.
+    public void remove(MenuComponent menuComponent) {
+        throw new UnsupportedOperationException();
+    }
+
+    // Récupère un enfant par son index. Par défaut, lève une exception.
+    public MenuComponent getChild(int i) {
+        throw new UnsupportedOperationException();
+    }
+    
+    // Fournit un itérateur pour parcourir la structure (utile pour la serveuse).
+    // Une implémentation par défaut simple pourrait retourner un itérateur vide pour les Feuilles.
+    public Iterator<MenuComponent> createIterator() {
+        // En Java, on peut retourner une implémentation anonyme d'Iterator pour une Feuille.
+        return new Iterator<MenuComponent>() {
+            @Override
+            public boolean hasNext() { return false; }
+
+            @Override
+            public MenuComponent next() { throw new NoSuchElementException(); }
+        };
+    }
+
+    // --- Méthodes d'Opération (Les Feuilles et Composites les surchargent) ---
+
+    public String getName() {
+        throw new UnsupportedOperationException();
+    }
+
+    public String getDescription() {
+        throw new UnsupportedOperationException();
+    }
+
+    public double getPrice() {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean isVegetarian() {
+        throw new UnsupportedOperationException();
+    }
+
+    // Affiche le composant (l'opération clé du Composite)
+    public void print() {
+        throw new UnsupportedOperationException();
+    }
+}// END OF FILE: EXO 1/MenuComponent.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 1/MenuItem.java
+
+// La Feuille (Leaf) : représente un élément de menu individuel.
+public class MenuItem extends MenuComponent {
+    String name;
+    String description;
+    boolean vegetarian;
+    double price;
+
+    // Constructeur : prend les données de l'élément de menu.
+    public MenuItem(String name, String description, boolean vegetarian, double price) {
+        this.name = name;
+        this.description = description;
+        this.vegetarian = vegetarian;
+        this.price = price;
+    }
+
+    // --- Surcharge des Méthodes d'Opération (celles qui ont du sens) ---
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
+    }
+
+    @Override
+    public double getPrice() {
+        return price;
+    }
+
+    @Override
+    public boolean isVegetarian() {
+        return vegetarian;
+    }
+    
+    // Le print() de la Feuille imprime ses propres informations.
+    @Override
+    public void print() {
+        System.out.print("  " + getName());
+        if (isVegetarian()) {
+            System.out.print(" (v)");
+        }
+        System.out.println(", " + getPrice() + "€");
+        System.out.println("     -- " + getDescription());
+    }
+}// END OF FILE: EXO 1/MenuItem.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 1/Menu.java
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+// Le Composite : représente un Menu qui peut contenir d'autres Menus (récursivité) ou MenuItems.
+public class Menu extends MenuComponent {
+    List<MenuComponent> menuComponents = new ArrayList<>();
+    String name;
+    String description;
+
+    public Menu(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
+
+    // --- Surcharge des Méthodes de Gestion (celles qui ont du sens pour un conteneur) ---
+
+    @Override
+    public void add(MenuComponent menuComponent) {
+        menuComponents.add(menuComponent);
+    }
+
+    @Override
+    public void remove(MenuComponent menuComponent) {
+        menuComponents.remove(menuComponent);
+    }
+
+    @Override
+    public MenuComponent getChild(int i) {
+        return menuComponents.get(i);
+    }
+    
+    // Surcharge pour un Menu : il n'a pas de prix et n'est pas végétarien lui-même.
+    @Override
+    public double getPrice() {
+        // Ajout d'une fonctionnalité : calculer le prix total du menu (somme des enfants)
+        double total = 0.0;
+        for (MenuComponent component : menuComponents) {
+            // Utilise la récursivité pour obtenir le prix des sous-menus et des items.
+            total += component.getPrice();
+        }
+        return total;
+    }
+
+    // --- Méthode d'Opération Clé : Print Récursif ---
+
+    @Override
+    public void print() {
+        System.out.print("\n" + getName());
+        System.out.println(", " + getDescription());
+        System.out.println("------------------------------------");
+
+        // --- Utilisation du CompositeIterator ---
+        Iterator<MenuComponent> iterator = createIterator(); // Utilise la nouvelle méthode
+        while (iterator.hasNext()) {
+            MenuComponent menuComponent = iterator.next();
+            // L'appel récursif est maintenant géré par l'itérateur lui-même
+            if (menuComponent instanceof MenuItem) { // Ajout d'une condition pour ne pas imprimer les Menus deux fois
+                menuComponent.print();
+            }
+        }
+        
+        // Ajout : Afficher le prix total du menu
+        System.out.println("\n[Prix Total du " + getName() + ": " + getPrice() + "€]\n");
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
+    }
+
+    // Surcharge du createIterator pour retourner l'itérateur de la liste interne
+    @Override
+    public Iterator<MenuComponent> createIterator() {
+        // On crée un CompositeIterator en lui passant l'itérateur de la liste interne.
+        // Il gérera le parcours de tout l'arbre descendant.
+        return new CompositeIterator(menuComponents.iterator());
+    }
+}// END OF FILE: EXO 1/Menu.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 1/waitress.java
+
+import java.util.Iterator;
+
+// Le Client : interagit avec tous les objets via l'interface MenuComponent
+public class Waitress {
+    MenuComponent allMenus;
+
+    public Waitress(MenuComponent allMenus) {
+        this.allMenus = allMenus;
+    }
+
+    // Méthode standard pour imprimer tout le menu (utilise la récursivité du Composite)
+    public void printMenu() {
+        allMenus.print();
+    }
+
+    //  Méthode pour imprimer un composant spécifique (Menu ou MenuItem) ---
+    public void printSpecificComponent(MenuComponent component) {
+        System.out.println("--- AFFICHAGE DU COMPOSANT : " + component.getName() + " ---");
+        component.print();
+        System.out.println("------------------------------------");
+    }
+
+    //  Méthode pour obtenir le prix total d'un composant spécifique (Menu ou MenuItem) ---
+    public void printSpecificComponentPrice(MenuComponent component) {
+        System.out.println("--- PRIX TOTAL DE : " + component.getName() + " ---");
+        System.out.println(component.getPrice() + "€");
+        System.out.println("------------------------------------");
+    }
+
+    // Méthode pour imprimer UNIQUEMENT les non-végétariens ---
+    public void printNonVegetarianMenu() {
+        System.out.println("\nMENU NON-VÉGÉTARIEN\n--------------------");
+        // Utilise l'itérateur récursif pour parcourir tous les éléments
+        Iterator<MenuComponent> iterator = allMenus.createIterator();
+
+        while (iterator.hasNext()) {
+            MenuComponent menuComponent = iterator.next();
+            try {
+                // Si c'est un MenuItem ET qu'il N'est PAS végétarien
+                if (menuComponent instanceof MenuItem && !menuComponent.isVegetarian()) {
+                    menuComponent.print();
+                }
+            } catch (UnsupportedOperationException ignored) {
+                // Ignore les Composites (Menus) qui lèvent l'exception car ils ne sont ni l'un ni l'autre.
+            }
+        }
+        System.out.println("--------------------\n");
+    }
+
+    // --- Méthode d'Exercice : Imprimer uniquement les plats Végétariens ---
+    public void printVegetarianMenu() {
+        System.out.println("\nMENU VÉGÉTARIEN\n--------------------");
+        // Crée un itérateur pour parcourir l'arbre (le Menu de haut niveau)
+        Iterator<MenuComponent> iterator = allMenus.createIterator();
+
+        while (iterator.hasNext()) {
+            MenuComponent menuComponent = iterator.next();
+            try {
+                // Tente d'appeler isVegetarian() et print() sur l'élément.
+                // Si c'est un MenuItem ET qu'il est végétarien, on l'imprime.
+                if (menuComponent instanceof MenuItem && menuComponent.isVegetarian()) {
+                    menuComponent.print();
+                }
+            } catch (UnsupportedOperationException e) {
+                // CATCH : Si c'est un objet Menu (Composite), isVegetarian() lève une
+                // UnsupportedOperationException. On l'attrape et on continue l'itération.
+                // Cela garantit que seuls les MenuItems sont vérifiés.
+            }
+        }
+        System.out.println("--------------------\n");
+    }
+}// END OF FILE: EXO 1/waitress.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 3/Beverage.java
+
+public abstract class Beverage {
+    String description = "Boisson inconnue";
+
+    public String getDescription() {
+        return description;
+    }
+
+    public abstract double cost();
+}// END OF FILE: EXO 3/Beverage.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 3/CondimentDecorator.java
+
+public abstract class CondimentDecorator extends Beverage {
+    // Chaque décorateur doit redéfinir la méthode getDescription()
+    public abstract String getDescription();
+}
+// END OF FILE: EXO 3/CondimentDecorator.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 3/DarkRoast.java
+
+public class DarkRoast extends Beverage {
+    public DarkRoast() {
+        description = "Café Corsé";
+    }
+
+    public double cost() {
+        return 0.99;
+    }
+}
+
+// END OF FILE: EXO 3/DarkRoast.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 3/Espresso.java
+
+public class Espresso extends Beverage {
+    public Espresso() {
+        description = "Espresso";
+    }
+
+    public double cost() {
+        return 1.99;
+    }
+}
+
+// END OF FILE: EXO 3/Espresso.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 3/HouseBlend.java
+
+public class HouseBlend extends Beverage {
+    public HouseBlend() {
+        description = "Mélange Maison";
+    }
+
+    public double cost() {
+        return 0.89;
+    }
+}// END OF FILE: EXO 3/HouseBlend.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 3/Mocha.java
+
+public class Mocha extends CondimentDecorator {
+    Beverage beverage;
+
+    public Mocha(Beverage beverage) {
+        this.beverage = beverage;
+    }
+
+    public String getDescription() {
+        return beverage.getDescription() + ", Chocolat";
+    }
+
+    public double cost() {
+        return beverage.cost() + 0.20; // Ajoute le coût du chocolat
+    }
+}
+// END OF FILE: EXO 3/Mocha.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 3/Soy.java
+
+public class Soy extends CondimentDecorator {
+    Beverage beverage;
+
+    public Soy(Beverage beverage) {
+        this.beverage = beverage;
+    }
+
+    public String getDescription() {
+        return beverage.getDescription() + ", Soja";
+    }
+
+    public double cost() {
+        return beverage.cost() + 0.15; // Ajoute le coût du soja
+    }
+}// END OF FILE: EXO 3/Soy.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 3/StarbuzzCoffee.java
+
+public class StarbuzzCoffee {
+
+    public static void main(String args[]) {
+        // Scénario 1 : Un Espresso simple, sans suppléments.
+        Beverage beverage1 = new Espresso();
+        System.out.println("Commande 1:");
+        System.out.println(beverage1.getDescription() + " $" + beverage1.cost());
+        System.out.println("--------------------");
+
+        // Scénario 2 : Un Café Corsé avec double Chocolat et une touche de Chantilly.
+        Beverage beverage2 = new DarkRoast();
+        beverage2 = new Mocha(beverage2); // On enveloppe le café avec du chocolat
+        beverage2 = new Mocha(beverage2); // On enveloppe une deuxième fois pour un double chocolat
+        beverage2 = new Whip(beverage2);  // On ajoute la chantilly
+        System.out.println("Commande 2:");
+        System.out.println(beverage2.getDescription() + " $" + String.format("%.2f", beverage2.cost()));
+        System.out.println("--------------------");
+
+        // Scénario 3 : Un Mélange Maison avec Soja, Chocolat et Chantilly.
+        Beverage beverage3 = new HouseBlend();
+        beverage3 = new Soy(beverage3);      // On enveloppe avec du Soja
+        beverage3 = new Mocha(beverage3);    // Puis du Chocolat
+        beverage3 = new Whip(beverage3);     // Et enfin de la Chantilly
+        System.out.println("Commande 3:");
+        System.out.println(beverage3.getDescription() + " $" + String.format("%.2f", beverage3.cost()));
+        System.out.println("--------------------");
+    }
+}// END OF FILE: EXO 3/StarbuzzCoffee.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/EXO 3/Whip.java
+
+public class Whip extends CondimentDecorator {
+    Beverage beverage;
+
+    public Whip(Beverage beverage) {
+        this.beverage = beverage;
+    }
+
+    public String getDescription() {
+        return beverage.getDescription() + ", Chantilly";
+    }
+
+    public double cost() {
+        return beverage.cost() + 0.10; // Ajoute le coût de la chantilly
+    }
+}// END OF FILE: EXO 3/Whip.java
+
+//---> PATH: /home/atabong/Documents/projet/GL/TP1/prompter.sh
+
+#!/bin/bash
+
+# --- Configuration ---
+
+# Default project path if none provided
+DEFAULT_PROJECT_PATH="."
+PROJECT_PATH=${1:-"$DEFAULT_PROJECT_PATH"}
+
+# Output file name (relative to PROJECT_PATH)
+OUTPUT_FILENAME="project_context.txt"
+
+# Directories to completely ignore (won't be traversed)
+EXCLUDE_DIRS_PATTERN=( \
+    ".*"            # All hidden folders (.git, .vscode, .idea, .svn, etc.)
+    "node_modules"
+    "vendor"        # PHP Composer
+    "build"
+    "dist"
+    "target"        # Java/Rust build outputs
+    "__pycache__"   # Python cache
+    ".next"         # Next.js build output
+    "cache"         # General cache folders
+    "target"
+    "venv"
+    "storage"       # Laravel storage (often contains logs, cache, etc.)
+    # Add more directory names here if needed
+)
+
+# Specific file patterns to ignore within traversed directories
+EXCLUDE_FILES_PATTERN=( \
+    "*.log"
+    "*.jar"
+    "*.pdf"
+    "*.png"
+    "*.jpg"
+    "*.class"
+    "*.sqlite"
+    "*.csv"
+    "project_context.txt"
+    # ".env*"       # Consider if you NEED .env files; uncomment if NOT needed.
+    "package-lock.json"
+    "yarn.lock"
+    "composer.lock"
+    "*.ico"
+    "pnpm-lock.yaml"
+    # Add more file patterns here (e.g., "*.swp", "*.bak", "*.tmp")
+)
+
+# --- Script Logic ---
+
+# Attempt to get absolute path; exit if PROJECT_PATH is invalid early
+PROJECT_PATH=$(realpath "$PROJECT_PATH" 2>/dev/null)
+if [ $? -ne 0 ] || [ ! -d "$PROJECT_PATH" ]; then
+    echo "Error: Invalid or non-existent project directory specified." >&2 # Error to stderr
+    exit 1
+fi
+
+OUTPUT_FILE="$PROJECT_PATH/$OUTPUT_FILENAME"
+
+# --- Safety Check: Prevent overwriting the project directory itself ---
+# This is unlikely but guards against strange configurations
+if [ "$PROJECT_PATH" == "$OUTPUT_FILE" ]; then
+    echo "Error: Project directory path conflicts with output file name '$OUTPUT_FILENAME'." >&2
+    exit 1
+fi
+
+# Delete output file silently if it exists
+rm -f "$OUTPUT_FILE"
+
+# --- Build the find command ---
+# Uses arrays to construct the find command safely and avoid complex escaping issues with eval
+find_args=("$PROJECT_PATH")
+
+# Add directory prune conditions
+if [ ${#EXCLUDE_DIRS_PATTERN[@]} -gt 0 ]; then
+    find_args+=(\()
+    first_prune=true
+    for dir_pattern in "${EXCLUDE_DIRS_PATTERN[@]}"; do
+        if ! $first_prune; then
+            find_args+=(-o)
+        fi
+        find_args+=(-name "$dir_pattern" -type d)
+        first_prune=false
+    done
+    find_args+=(\) -prune -o) # Add the prune action and the OR for the next part
+fi
+
+# Add primary find conditions (type file, exclude output file, exclude patterns)
+find_args+=(\( -type f -not -path "$OUTPUT_FILE")
+if [ ${#EXCLUDE_FILES_PATTERN[@]} -gt 0 ]; then
+    for file_pattern in "${EXCLUDE_FILES_PATTERN[@]}"; do
+        find_args+=(-not -name "$file_pattern")
+    done
+fi
+find_args+=(-print \)) # Add the print action and close the group
+
+# --- Execute the find command and process results ---
+
+# Create the header in the output file
+{
+    echo "Project Context From: $PROJECT_PATH"
+    echo "Generated On: $(date)"
+    echo "==============================================="
+    echo "Ignored Directory Patterns: ${EXCLUDE_DIRS_PATTERN[*]}"
+    echo "Ignored File Patterns: ${EXCLUDE_FILES_PATTERN[*]}"
+    echo "==============================================="
+    echo ""
+} > "$OUTPUT_FILE"
+
+error_count=0
+# Use find with process substitution and sorting. Avoids eval.
+while IFS= read -r FILE_PATH; do
+    # Calculate relative path for cleaner output
+    RELATIVE_PATH="${FILE_PATH#"$PROJECT_PATH"/}"
+
+    # Append file info and content to the output file
+    {
+        # echo ""
+        # echo "// ==============================================="
+        # echo "---> FILE: $RELATIVE_PATH"
+        echo "//---> PATH: $FILE_PATH"
+        # echo "// ==============================================="
+        echo ""
+    } >> "$OUTPUT_FILE"
+
+    # Check if file is likely binary/non-text using 'file' command
+    # -b: omit filename; check for common non-text types
+    if file -b "$FILE_PATH" | grep -q -E 'binary|archive|compressed|image|font'; then
+        echo "[Non-text file (e.g., binary, data, compressed) - Contents omitted]" >> "$OUTPUT_FILE"
+    else
+        # Append text file content, redirect cat errors to stderr
+        if ! cat "$FILE_PATH" >> "$OUTPUT_FILE" 2> /dev/null; then # Hide cat errors from stdout
+             # Optionally log error to the output file itself, or just count it
+             echo "[Error reading file content for $RELATIVE_PATH]" >> "$OUTPUT_FILE"
+             ((error_count++))
+        fi
+    fi
+
+    {
+        # echo ""
+        echo "// END OF FILE: $RELATIVE_PATH"
+        echo ""
+    } >> "$OUTPUT_FILE"
+
+done < <(find "${find_args[@]}" | sort) # Execute find command using safe array expansion
+
+# Optionally report errors to stderr if any occurred
+if [ $error_count -gt 0 ]; then
+    echo "Warning: Encountered $error_count errors reading file contents during context generation." >&2
+    # Exit with a non-zero status to indicate partial success/warning
+    exit 1
+fi
+
+# Exit silently on success
+exit 0
+// END OF FILE: prompter.sh
+
